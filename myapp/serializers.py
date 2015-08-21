@@ -27,10 +27,20 @@ class CategorySerializer(serializers.ModelSerializer):
         fields = ('name', 'description')
         read_only = ('description',)
 
+        extra_kwargs = {
+            'name': {
+                'validators': []
+            }
+        }
+
 
 class ListingSerializer(serializers.ModelSerializer):
     owners = ProfileSerializer(required=False, many=True)
-    category = CategorySerializer(required=False, validators=[])
+    category = CategorySerializer(required=False)
+    # category = serializers.SlugRelatedField(
+    #     slug_field='category.name',
+    #     queryset=models.Category.objects.all()
+    # )
 
     class Meta:
         model = models.Listing
@@ -38,6 +48,7 @@ class ListingSerializer(serializers.ModelSerializer):
 
     def validate(self, data):
         logger.info('inside ListingSerializer validate')
+        data['category'] = models.Category.objects.get(name=data['category']['name'])
         return data
 
     def create(self, validated_data):
@@ -45,7 +56,6 @@ class ListingSerializer(serializers.ModelSerializer):
         title = validated_data['title']
 
         listing = models.Listing(title=validated_data['title'],
-            description=validated_data['description'],
             category=validated_data['category'])
 
         listing.save()

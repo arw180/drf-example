@@ -5,6 +5,7 @@ from django.shortcuts import get_object_or_404
 
 import django.contrib.auth
 
+from rest_framework import status
 from rest_framework import viewsets
 from rest_framework.response import Response
 
@@ -31,3 +32,17 @@ class ListingViewSet(viewsets.ModelViewSet):
     logger.info('inside ListingSerializerViewSet')
     queryset = models.Listing.objects.all()
     serializer_class = serializers.ListingSerializer
+
+    def create(self, request):
+        logger.info('inside ListingViewSet.create')
+        serializer = serializers.ListingSerializer(data=request.data,
+            context={'request': request}, partial=True)
+        if not serializer.is_valid():
+            logger.error('%s' % serializer.errors)
+            return Response(serializer.errors,
+                  status=status.HTTP_400_BAD_REQUEST)
+
+        serializer.save()
+
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
+
